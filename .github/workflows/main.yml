@@ -164,7 +164,7 @@ jobs:
 
       - name: Deploy helm to Development
         run: |
-          helm upgrade --install --dry-run --atomic --wait --timeout 3600s --debug todoapp ./todoapp.tgz \
+          helm upgrade --install --dry-run --atomic --wait --timeout 3600s --debug todoapp ./todoapp-*.tgz \
           -f ./todoapp/values.yaml \
           --set todoapp.secrets.SECRET_KEY="${{ secrets.SECRET_KEY}}" \
           --set todoapp.secrets.DB_NAME="${{ secrets.DB_NAME}}" \
