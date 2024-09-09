@@ -75,8 +75,6 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.ref_name == 'develop' }}
     needs: python-ci
-    outputs:
-      DockerImageName: ${{ env.DockerImageName }}
 
     steps:
 
@@ -97,7 +95,7 @@ jobs:
       with:
         push: true
         context: ./src
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DockerImageName }}:${{ github.sha }}
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.DockerImageName }}:${{ github.sha }}
 
   helm-ci:
     runs-on: ubuntu-latest
@@ -137,7 +135,6 @@ jobs:
     with:
       environment: development
       version: ${{ github.sha }}
-      DockerImageName: ${{ needs.docker-ci.outputs.DockerImageName }}
 
   deploy-helm-staging:
     name: Deploy Helm
@@ -147,6 +144,5 @@ jobs:
     with:
       environment: staging
       version: ${{ github.sha }}
-      DockerImageName: ${{ needs.docker-ci.outputs.DockerImageName }}
       helm-values-path: ./todoapp/values/stg.yaml
       helm-release-name: todoapp-staging
