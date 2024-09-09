@@ -58,7 +58,19 @@ jobs:
           config: ./cluster.yml
 
       - name: Preview Helm Install
-        run: helm install ${{ inputs.helm-release-name }} ./todoapp-*.tgz -f ${{ inputs.helm-values-path }} --dry-run
+        run: |
+          helm upgrade --dry-run ${{ inputs.helm-release-name }} ./todoapp-*.tgz \
+          -f ${{ inputs.helm-values-path }} \
+          --set todoapp.secrets.SECRET_KEY="${{ secrets.SECRET_KEY}}" \
+          --set todoapp.secrets.DB_NAME="${{ secrets.DB_NAME}}" \
+          --set todoapp.secrets.DB_USER="${{ secrets.DB_USER}}" \
+          --set todoapp.secrets.DB_PASSWORD="${{ secrets.DB_PASSWORD}}" \
+          --set todoapp.secrets.DB_HOST="${{ secrets.DB_HOST}}" \
+          --set mysql.secrets.MYSQL_ROOT_PASSWORD="${{ secrets.MYSQL_ROOT_PASSWORD}}" \
+          --set mysql.secrets.MYSQL_USER="${{ secrets.MYSQL_USER}}" \
+          --set mysql.secrets.MYSQL_PASSWORD="${{ secrets.MYSQL_PASSWORD}}" \
+          --set todoapp.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.DockerImageName }} \
+          --set todoapp.image.tag=${{ inputs.version }}
 
       - name: Deploy helm to Development
         run: |
@@ -73,4 +85,4 @@ jobs:
           --set mysql.secrets.MYSQL_USER="${{ secrets.MYSQL_USER}}" \
           --set mysql.secrets.MYSQL_PASSWORD="${{ secrets.MYSQL_PASSWORD}}" \
           --set todoapp.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.DockerImageName }} \
-          --set todoapp.image.tag=${{ github.sha }}
+          --set todoapp.image.tag=${{ inputs.version }}
