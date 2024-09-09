@@ -58,7 +58,7 @@ jobs:
           config: ./cluster.yml
 
       - name: Preview Helm Install
-        run: helm install --dry-run
+        run: helm install ${{ inputs.helm-release-name }} ./todoapp-*.tgz -f ${{ inputs.helm-values-path }} --dry-run
 
       - name: Deploy helm to Development
         run: |
