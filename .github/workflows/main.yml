@@ -75,6 +75,8 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.ref_name == 'develop' }}
     needs: python-ci
+    outputs:
+      DockerImageName: ${{ env.DockerImageName }}
     steps:
 
     - uses: actions/download-artifact@v4
@@ -126,53 +128,12 @@ jobs:
         name: helm-package
         path: ./*.tgz
 
-  deploy-helm:
-    name: Deploy helm
-    needs: [docker-ci, helm-ci]
-    runs-on: ubuntu-latest
-    environment: development
-
-    steps:
-      - name: Download Helm Package
-        uses: actions/download-artifact@v4
-        with:
-          name: helm-package
-          path: .
-
-      - name: Download Helm Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: helm-artifacts
-          path: .
-
-      - name: Download Cluster Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: cluster-artifact
-          path: .
-
-      - name: Set Up Helm
-        uses: azure/setup-helm@v4.2.0
-
-      - name: Set Up Kubectl
-        uses: azure/setup-kubectl@v4
-
-      - name: Create k8s Kind Cluster
-        uses: helm/kind-action@v1
-        with:
-          config: ./cluster.yml
-
-      - name: Deploy helm to Development
-        run: |
-          helm upgrade --install --dry-run --atomic --wait --timeout 3600s --debug todoapp ./todoapp-*.tgz \
-          -f ./todoapp/values.yaml \
-          --set todoapp.secrets.SECRET_KEY="${{ secrets.SECRET_KEY}}" \
-          --set todoapp.secrets.DB_NAME="${{ secrets.DB_NAME}}" \
-          --set todoapp.secrets.DB_USER="${{ secrets.DB_USER}}" \
-          --set todoapp.secrets.DB_PASSWORD="${{ secrets.DB_PASSWORD}}" \
-          --set todoapp.secrets.DB_HOST="${{ secrets.DB_HOST}}" \
-          --set mysql.secrets.MYSQL_ROOT_PASSWORD="${{ secrets.MYSQL_ROOT_PASSWORD}}" \
-          --set mysql.secrets.MYSQL_USER="${{ secrets.MYSQL_USER}}" \
-          --set mysql.secrets.MYSQL_PASSWORD="${{ secrets.MYSQL_PASSWORD}}" \
-          --set todoapp.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DockerImageName }} \
-          --set todoapp.image.tag=${{ github.sha }}
+  deploy-helm-dev:
+    name: Deploy Helm
+    uses: ./.github/workflows/deployment.yml
+    needs: [helm-ci, docker-ci]
+    secrets: inherit
+    with:
+      environment: development
+      version: ${{ github.sha }}
+      DockerImageName: ${{ needs.docker-ci.outputs.DockerImageName }}
